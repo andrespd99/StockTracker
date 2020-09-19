@@ -65,7 +65,7 @@ class StockCandles {
         close: stock.closes[i],
         high: stock.highs[i],
         low: stock.lows[i],
-        open: stock.closes[i],
+        open: stock.opens[i],
         timestamp: stock.timestamps[i],
         volume: stock.volumes[i],
       );

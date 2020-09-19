@@ -24,24 +24,21 @@ class CandlesBloc {
   }
 
   // Process the response of URL results.
-  Future<StockCandles> _processResponse(Uri url) async {
+  Future<dynamic> _processResponse(Uri url) async {
     final resp = await http.get(url);
+    if (resp.body == 'You don\'t have access to this resource.') return false;
     final candles = stockCandlesFromJson(resp.body);
 
     return candles;
   }
 
   // Get daily data from today to X days back of a stock.
-  Future<StockCandles> getStockCandles(String symbol) async {
-    if (_loading) return null;
-
-    _loading = true;
-
+  Future<dynamic> getStockCandles(String symbol) async {
     // Construct the API's URL link.
     final url = Uri.https(_url, '/api/v1/stock/candle', {
       'symbol': symbol,
       'resolution': 'D', // D to get data in days.
-      'from': getXDaysBackToUnix(kQuotesRange + 10).toString(),
+      'from': getXDaysBackToUnix(kQuotesRange * 2).toString(),
       'to': getTodayDateToUnix().toString(),
       'token': _apiKey,
     });
@@ -52,11 +49,13 @@ class CandlesBloc {
     final resp = await _processResponse(url);
 
     // Cache results in a list.
+    if (resp.runtimeType == bool) {
+      return false;
+    }
     _stockCandles.add(resp);
     // Sink results to the stream.
     candlesSink(resp);
 
-    _loading = false;
     return resp;
   }
 

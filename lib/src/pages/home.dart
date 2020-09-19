@@ -4,20 +4,24 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import 'package:stock_tracker/constants.dart';
+import 'package:stock_tracker/src/models/company_profile.dart';
 import 'package:stock_tracker/src/pages/stock_details.dart';
-import 'package:stock_tracker/src/services/symbols_bloc.dart';
+import 'package:stock_tracker/src/services/candles_bloc.dart';
+import 'package:stock_tracker/src/services/company_profile_bloc.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key key}) : super(key: key);
+  HomePage({Key key}) : super(key: key);
+
+  List<String> pinnedStocks = ['AAPL', 'GOOGL', 'NKE', 'SBUX'];
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final textTheme = Theme.of(context).textTheme;
 
-    final symbolsBloc = Provider.of<SymbolsBloc>(context);
+    final companiesBloc = Provider.of<CompanyProfileBloc>(context);
 
-    symbolsBloc.getStockSymbols();
+    pinnedStocks.forEach((element) => companiesBloc.getCompany(element));
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
@@ -29,10 +33,10 @@ class HomePage extends StatelessWidget {
             HomeAppBar(textTheme: textTheme),
             SizedBox(height: kDefaultPadding),
             StreamBuilder(
-              stream: symbolsBloc.symbolsStream,
+              stream: companiesBloc.companiesStream,
               // initialData: initialData ,
               builder: (BuildContext context,
-                  AsyncSnapshot<List<StockSymbol>> snapshot) {
+                  AsyncSnapshot<List<CompanyProfile>> snapshot) {
                 return snapshot.hasData
                     ? StockCards(snapshot.data)
                     : Center(child: CircularProgressIndicator());
@@ -81,18 +85,19 @@ class HomeAppBar extends StatelessWidget {
 }
 
 class StockCards extends StatelessWidget {
-  const StockCards(this.stockSymbols, {Key key}) : super(key: key);
+  const StockCards(this.companies, {Key key}) : super(key: key);
 
-  final List<StockSymbol> stockSymbols;
-  final int _count = 50;
+  final List<CompanyProfile> companies;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: ListView.separated(
+        itemCount: companies.length,
         separatorBuilder: (context, index) => Divider(),
-        itemCount: _count,
-        itemBuilder: (context, i) => StockCard(stockSymbols[i]),
+        itemBuilder: (context, i) {
+          return StockCard(companies[i]);
+        },
       ),
     );
   }
@@ -100,19 +105,20 @@ class StockCards extends StatelessWidget {
 
 class StockCard extends StatelessWidget {
   const StockCard(
-    this.data, {
+    this.company, {
     Key key,
   }) : super(key: key);
 
-  final StockSymbol data;
+  final CompanyProfile company;
 
   @override
   Widget build(BuildContext context) {
+    final bloc = Provider.of<CandlesBloc>(context);
     final w = MediaQuery.of(context).size.width;
     final textTheme = Theme.of(context).textTheme;
     return GestureDetector(
-      onTap: () => Navigator.push(
-          context, MaterialPageRoute(builder: (context) => StockDetails(data))),
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (context) => StockDetails(company))),
       child: Container(
         color: Colors.transparent,
         padding: EdgeInsets.symmetric(vertical: kDefaultPadding / 2.5),
@@ -121,14 +127,15 @@ class StockCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: buildSymbolAndName(data, textTheme),
+              child: buildSymbolAndName(company, textTheme),
             ),
             Container(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('\$258.00', style: textTheme.headline5),
+                  Text('${company.candles.quotes[0].close.toStringAsFixed(2)}',
+                      style: textTheme.headline5),
                   buildPercentageOfChangeBox(),
                 ],
               ),
@@ -139,17 +146,17 @@ class StockCard extends StatelessWidget {
     );
   }
 
-  Column buildSymbolAndName(StockSymbol data, TextTheme textTheme) {
+  Column buildSymbolAndName(CompanyProfile companyData, TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text(
-          "${data.symbol}",
+          "${companyData.ticker}",
           style: textTheme.headline4.copyWith(fontWeight: FontWeight.w500),
         ),
         Text(
-          "${data.description}",
+          "${companyData.name}",
           style: textTheme.headline6,
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
@@ -165,10 +172,13 @@ class StockCard extends StatelessWidget {
       height: 30.0,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Colors.red,
+        color: (company.candles.quotes[0].percentageOfChange >= 0)
+            ? Colors.green
+            : Colors.red,
         borderRadius: BorderRadius.all(Radius.circular(4.0)),
       ),
-      child: Text('-3.85%'),
+      child: Text(
+          '${company.candles.quotes[0].percentageOfChange.toStringAsFixed(2)}%'),
     );
   }
 }

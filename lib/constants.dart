@@ -14,4 +14,4 @@ const String kApiKey = 'bthvogn48v6rsb74nu8g';
 const String kUrl = 'finnhub.io';
 
 // Config data.
-const int kQuotesRange = 5;
+int kQuotesRange = 7;

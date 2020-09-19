@@ -10,10 +10,9 @@ class SymbolsBloc {
   String _apiKey = kApiKey;
   String _url = kUrl;
 
-  bool _loading = false;
+  // bool _loading = false;
 
-  // List<StockSymbol> _stockSymbols = [];
-  List<StockSymbol> _stockSymbols = [];
+  List<StockSymbol> stockSymbols = [];
 
   final _symbolsStreamController =
       StreamController<List<StockSymbol>>.broadcast();
@@ -34,9 +33,10 @@ class SymbolsBloc {
   }
 
   Future<List<StockSymbol>> getStockSymbols() async {
-    if (_loading) return [];
+    // if (stockSymbols.isEmpty) return stockSymbols;
+    // if (_loading) return [];
 
-    _loading = true;
+    // _loading = true;
 
     final url = Uri.https(_url, '/api/v1/stock/symbol', {
       'exchange': 'US',
@@ -45,10 +45,10 @@ class SymbolsBloc {
 
     final resp = await _processResponse(url);
 
-    _stockSymbols.addAll(resp);
-    symbolsSink(_stockSymbols);
+    stockSymbols.addAll(resp);
+    symbolsSink(stockSymbols);
 
-    _loading = false;
+    // _loading = false;
     return resp;
   }
 }

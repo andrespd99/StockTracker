@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import 'package:stock_tracker/src/models/stock_candles.dart';
+
 CompanyProfile companyProfileFromJson(String str) =>
     CompanyProfile.fromJson(json.decode(str));
 
@@ -31,12 +33,13 @@ class CompanyProfile {
   String finnhubIndustry;
   DateTime ipo;
   String logo;
-  int marketCapitalization;
+  double marketCapitalization;
   String name;
   String phone;
   double shareOutstanding;
   String ticker;
   String weburl;
+  StockCandles candles;
 
   factory CompanyProfile.fromJson(Map<String, dynamic> json) => CompanyProfile(
         country: json["country"],
@@ -45,7 +48,7 @@ class CompanyProfile {
         finnhubIndustry: json["finnhubIndustry"],
         ipo: DateTime.parse(json["ipo"]),
         logo: json["logo"],
-        marketCapitalization: json["marketCapitalization"],
+        marketCapitalization: json["marketCapitalization"].toDouble(),
         name: json["name"],
         phone: json["phone"],
         shareOutstanding: json["shareOutstanding"].toDouble(),
