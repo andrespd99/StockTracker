@@ -15,12 +15,9 @@ class CandlesBloc {
   // List<StockCandles> _stockCandles = [];
   List<StockCandles> _stockCandles = [];
 
-  final _candlesStreamController =
-      StreamController<List<StockCandles>>.broadcast();
-  Function(List<StockCandles>) get candlesSink =>
-      _candlesStreamController.sink.add;
-  Stream<List<StockCandles>> get candlesStream =>
-      _candlesStreamController.stream;
+  final _candlesStreamController = StreamController<StockCandles>.broadcast();
+  Function(StockCandles) get candlesSink => _candlesStreamController.sink.add;
+  Stream<StockCandles> get candlesStream => _candlesStreamController.stream;
 
   void dispose() {
     _candlesStreamController?.close();
@@ -44,10 +41,12 @@ class CandlesBloc {
     final url = Uri.https(_url, '/api/v1/stock/candle', {
       'symbol': symbol,
       'resolution': 'D', // D to get data in days.
-      'from': getXDaysBackToUnix(5).toString(),
+      'from': getXDaysBackToUnix(kQuotesRange + 10).toString(),
       'to': getTodayDateToUnix().toString(),
       'token': _apiKey,
     });
+
+    print(url);
 
     // Process URL and convert the results to an Object.
     final resp = await _processResponse(url);
@@ -55,7 +54,7 @@ class CandlesBloc {
     // Cache results in a list.
     _stockCandles.add(resp);
     // Sink results to the stream.
-    candlesSink(_stockCandles);
+    candlesSink(resp);
 
     _loading = false;
     return resp;
@@ -64,7 +63,7 @@ class CandlesBloc {
   // Get X days back in UNIX datetime,
   int getXDaysBackToUnix(int i) {
     final iDaysBack =
-        DateTime.now().subtract(Duration(days: 5)).millisecondsSinceEpoch /
+        DateTime.now().subtract(Duration(days: i)).millisecondsSinceEpoch /
             1000;
     return iDaysBack.toInt();
   }

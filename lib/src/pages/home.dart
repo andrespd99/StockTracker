@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+
 import 'package:stock_tracker/constants.dart';
 import 'package:stock_tracker/src/pages/stock_details.dart';
-import 'package:stock_tracker/src/providers/provider.dart';
+import 'package:stock_tracker/src/services/symbols_bloc.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key key}) : super(key: key);
@@ -11,35 +15,21 @@ class HomePage extends StatelessWidget {
     final w = MediaQuery.of(context).size.width;
     final textTheme = Theme.of(context).textTheme;
 
-    Provider.of(context).getStockSymbols();
+    final symbolsBloc = Provider.of<SymbolsBloc>(context);
+
+    symbolsBloc.getStockSymbols();
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
       width: w,
-      color: Colors.black,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Stocks', style: textTheme.headline3),
-            Text('December 3',
-                style: textTheme.headline4
-                    .copyWith(color: Colors.grey, fontWeight: FontWeight.bold)),
-            // RaisedButton(onPressed: null),
-            SizedBox(height: kDefaultPadding / 2),
-            SearchBox(),
-            // StreamBuilder(
-            //   stream: stream,
-            //   initialData: initialData,
-            //   builder: (BuildContext context, AsyncSnapshot snapshot) {
-            //     return Container(
-            //       child: child,
-            //     );
-            //   },
-            // ),
+            HomeAppBar(textTheme: textTheme),
             SizedBox(height: kDefaultPadding),
             StreamBuilder(
-              stream: Provider.of(context).symbolsStream,
+              stream: symbolsBloc.symbolsStream,
               // initialData: initialData ,
               builder: (BuildContext context,
                   AsyncSnapshot<List<StockSymbol>> snapshot) {
@@ -52,6 +42,41 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class HomeAppBar extends StatelessWidget {
+  const HomeAppBar({
+    Key key,
+    @required this.textTheme,
+  }) : super(key: key);
+
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Stocks', style: textTheme.headline3),
+          Text(getTodayDate(),
+              style: textTheme.headline4
+                  .copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold)),
+          // RaisedButton(onPressed: null),
+          SizedBox(height: kDefaultPadding / 2),
+          SearchBox(),
+        ],
+      ),
+    );
+  }
+
+  String getTodayDate() {
+    var date = DateTime.now();
+    var formatter = DateFormat('MMMMd');
+    var dateFormatted = formatter.format(date);
+
+    return dateFormatted;
   }
 }
 
@@ -87,11 +112,11 @@ class StockCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return GestureDetector(
       onTap: () => Navigator.push(
-          context, MaterialPageRoute(builder: (context) => StockDetails())),
+          context, MaterialPageRoute(builder: (context) => StockDetails(data))),
       child: Container(
+        color: Colors.transparent,
         padding: EdgeInsets.symmetric(vertical: kDefaultPadding / 2.5),
         width: w,
-        color: Colors.black,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

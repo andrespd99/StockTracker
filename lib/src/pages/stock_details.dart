@@ -1,32 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
-import 'package:stock_tracker/text_styles.dart';
+import 'package:stock_tracker/src/models/stock_symbol.dart';
+import 'package:stock_tracker/src/services/candles_bloc.dart';
+
+import 'package:intl/intl.dart';
 
 class StockDetails extends StatelessWidget {
-  const StockDetails({Key key}) : super(key: key);
+  const StockDetails(this._stockData, {Key key}) : super(key: key);
+
+  final StockSymbol _stockData;
 
   @override
   Widget build(BuildContext context) {
+    Provider.of<CandlesBloc>(context).getStockCandles(_stockData.symbol);
+
     var textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: buildAppBar(textTheme),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-            StockDailyData(),
-          ],
+        child: StreamBuilder(
+          stream: Provider.of<CandlesBloc>(context).candlesStream,
+          builder: (context, AsyncSnapshot<StockCandles> snapshot) {
+            return (snapshot.hasData)
+                ? StockHistoric(snapshot.data)
+                : Center(child: CircularProgressIndicator());
+          },
         ),
       ),
     );
@@ -34,18 +33,23 @@ class StockDetails extends StatelessWidget {
 
   AppBar buildAppBar(TextTheme textTheme) {
     return AppBar(
+      iconTheme: IconThemeData(color: Colors.white),
+      elevation: 0.0,
       centerTitle: false,
-      toolbarHeight: 70.0,
+      toolbarHeight: kAppBarHeight,
       backgroundColor: kSecondaryColor,
       title: RichText(
         text: TextSpan(
           children: [
             TextSpan(
-                text: 'AAPL',
+                text: '${_stockData.symbol}',
                 style:
                     textTheme.headline5.copyWith(fontWeight: FontWeight.w800)),
-            TextSpan(text: '  '),
-            TextSpan(text: 'Apple Inc.'),
+            TextSpan(text: '     '),
+            TextSpan(
+              text: '${_stockData.description}',
+              style: TextStyle(color: Colors.grey),
+            ),
           ],
         ),
       ),
@@ -53,17 +57,33 @@ class StockDetails extends StatelessWidget {
   }
 }
 
+class StockHistoric extends StatelessWidget {
+  const StockHistoric(this.data, {Key key}) : super(key: key);
+
+  final StockCandles data;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      itemBuilder: (_, i) => StockDailyData(data.quotes[i]),
+      separatorBuilder: (_, i) => Divider(),
+      itemCount: 5,
+    );
+  }
+}
+
 class StockDailyData extends StatelessWidget {
-  const StockDailyData({
+  const StockDailyData(
+    this.data, {
     Key key,
   }) : super(key: key);
+
+  final StockCandle data;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey, width: 0.3)),
-      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: kDefaultPadding),
         child: Column(
@@ -72,16 +92,19 @@ class StockDailyData extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
               child: Text(
-                'September 20',
+                getDateFromUnix(data.timestamp),
                 style: TextStyle(color: Colors.grey),
               ),
             ),
             SizedBox(height: kDefaultPadding / 4),
             Row(
+              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                AtCloseInfobar(),
-                Container(width: 0.2, color: Colors.grey),
-                Expanded(child: AtOpenInfobar()),
+                AtOpenInfobar(data),
+                SizedBox(width: kDefaultPadding),
+                Container(width: 0.5, height: 50.0, color: Colors.grey),
+                SizedBox(width: kDefaultPadding),
+                AtCloseInfobar(data),
               ],
             ),
           ],
@@ -89,12 +112,24 @@ class StockDailyData extends StatelessWidget {
       ),
     );
   }
+
+  String getDateFromUnix(int timestamp) {
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000).toUtc();
+    print(date.toString());
+    final formatter = DateFormat('MMMMd');
+    final dateFormated = formatter.format(date);
+
+    return dateFormated;
+  }
 }
 
 class AtCloseInfobar extends StatelessWidget {
-  const AtCloseInfobar({
+  const AtCloseInfobar(
+    this.data, {
     Key key,
   }) : super(key: key);
+
+  final StockCandle data;
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +144,7 @@ class AtCloseInfobar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '196.84',
+                '${data.close.toStringAsFixed(2)}',
                 style: textTheme.headline6
                     .copyWith(fontWeight: FontWeight.w700, color: Colors.white),
               ),
@@ -122,9 +157,9 @@ class AtCloseInfobar extends StatelessWidget {
           ),
           SizedBox(width: kDefaultPadding / 2),
           Text(
-            '-3,87%',
+            '${data.percentageOfChange.toStringAsFixed(2)}%',
             style: textTheme.subtitle1.copyWith(
-              color: Colors.green,
+              color: (data.percentageOfChange >= 0) ? Colors.green : Colors.red,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -135,9 +170,12 @@ class AtCloseInfobar extends StatelessWidget {
 }
 
 class AtOpenInfobar extends StatelessWidget {
-  const AtOpenInfobar({
+  const AtOpenInfobar(
+    this.data, {
     Key key,
   }) : super(key: key);
+
+  final StockCandle data;
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +190,7 @@ class AtOpenInfobar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '196.84',
+                '${data.open.toStringAsFixed(2)}',
                 style: textTheme.headline6
                     .copyWith(fontWeight: FontWeight.w700, color: Colors.white),
               ),
@@ -164,13 +202,13 @@ class AtOpenInfobar extends StatelessWidget {
             ],
           ),
           SizedBox(width: kDefaultPadding / 2),
-          Text(
-            '-3,87%',
-            style: textTheme.subtitle1.copyWith(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          // Text(
+          //   '-3,87%',
+          //   style: textTheme.subtitle1.copyWith(
+          //     color: Colors.red,
+          //     fontWeight: FontWeight.bold,
+          //   ),
+          // ),
         ],
       ),
     );

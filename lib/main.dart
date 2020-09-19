@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:stock_tracker/src/providers/provider.dart';
-
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import 'package:stock_tracker/src/pages/home.dart';
 import 'package:stock_tracker/constants.dart';
+
+import 'package:stock_tracker/src/services/candles_bloc.dart';
+import 'package:stock_tracker/src/services/company_profile_bloc.dart';
+import 'package:stock_tracker/src/services/symbols_bloc.dart';
 
 void main() => runApp(MyApp());
 
@@ -15,7 +17,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Provider(
+    return MultiProvider(
+      providers: [
+        Provider<SymbolsBloc>(create: (_) => SymbolsBloc()),
+        Provider<CompanyProfileBloc>(create: (_) => CompanyProfileBloc()),
+        Provider<CandlesBloc>(create: (_) => CandlesBloc()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
