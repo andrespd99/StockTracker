@@ -8,6 +8,8 @@
 .buildlog/
 .history
 .svn/
+config.js
+serviceAccount.js
 
 # IntelliJ related
 *.iml

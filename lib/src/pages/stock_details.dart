@@ -135,7 +135,7 @@ class AtCloseInfobar extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final closingPrice = data.close.toStringAsFixed(2);
-    final changePctg = data.percentageOfChange.toStringAsFixed(2);
+    final changePctg = data.pctOfChange.toStringAsFixed(2);
 
     return Expanded(
       child: Padding(
@@ -161,11 +161,9 @@ class AtCloseInfobar extends StatelessWidget {
             ),
             SizedBox(width: kDefaultPadding / 2),
             Text(
-              (data.percentageOfChange > 0) ? '+$changePctg%' : '$changePctg%',
+              (data.pctOfChange > 0) ? '+$changePctg%' : '$changePctg%',
               style: textTheme.subtitle1.copyWith(
-                  color: (data.percentageOfChange >= 0)
-                      ? Colors.green
-                      : Colors.red,
+                  color: (data.pctOfChange >= 0) ? Colors.green : Colors.red,
                   fontWeight: FontWeight.bold),
             ),
           ],

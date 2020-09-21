@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "799115254883",
+    "firebase_url": "https://stock-tracker-bc8f2.firebaseio.com",
+    "project_id": "stock-tracker-bc8f2",
+    "storage_bucket": "stock-tracker-bc8f2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799115254883:android:de4aede4911f8e72b7ec56",
+        "android_client_info": {
+          "package_name": "com.example.stock_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "799115254883-hr15a06bb4f3b31c46sr1esvd3t1idkf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpm_tOm3bOiLT2f8ViOitRgA2snQtArOU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "799115254883-hr15a06bb4f3b31c46sr1esvd3t1idkf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "799115254883-ot25257ud5kuklc8dujttrngeb34486e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.stockTracker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

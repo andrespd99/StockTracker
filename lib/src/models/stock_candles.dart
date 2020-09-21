@@ -4,11 +4,6 @@
 
 import 'dart:convert';
 
-StockCandles stockCandlesFromJson(String str) =>
-    StockCandles.fromJson(json.decode(str));
-
-String stockCandlesToJson(StockCandles data) => json.encode(data.toJson());
-
 class StockCandle {
   StockCandle({
     this.close,
@@ -25,55 +20,63 @@ class StockCandle {
   double open;
   int timestamp;
   int volume;
-  double percentageOfChange = 0.0;
+  double pctOfChange = 0.0;
 }
 
-class StockCandles {
-  StockCandles({
-    this.closes,
-    this.highs,
-    this.lows,
-    this.opens,
-    this.timestamps,
-    this.volumes,
-  });
+StockCandles stockCandlesFromJson(String str) =>
+    StockCandles.fromJson(json.decode(str));
 
-  List<double> closes;
-  List<double> highs;
-  List<double> lows;
-  List<double> opens;
-  List<int> timestamps;
-  List<int> volumes;
+String stockCandlesToJson(StockCandles data) => json.encode(data.toJson());
+
+class StockCandles {
+  StockCandles(
+    this._closes,
+    this._highs,
+    this._lows,
+    this._opens,
+    this._timestamps,
+    this._volumes,
+  );
+
+  // List of all data structured in StockCandle objects.
   List<StockCandle> quotes;
+
+  // Data of all prices.
+  List<double> _closes;
+  List<double> _highs;
+  List<double> _lows;
+  List<double> _opens;
+  List<int> _timestamps;
+  List<int> _volumes;
 
   factory StockCandles.fromJson(Map<String, dynamic> json) {
     final stock = StockCandles(
-      closes: List<double>.from(json["c"].map((x) => x.toDouble())),
-      highs: List<double>.from(json["h"].map((x) => x.toDouble())),
-      lows: List<double>.from(json["l"].map((x) => x.toDouble())),
-      opens: List<double>.from(json["o"].map((x) => x.toDouble())),
-      timestamps: List<int>.from(json["t"].map((x) => x)),
-      volumes: List<int>.from(json["v"].map((x) => x)),
+      List<double>.from(json["c"].map((x) => x.toDouble())),
+      List<double>.from(json["h"].map((x) => x.toDouble())),
+      List<double>.from(json["l"].map((x) => x.toDouble())),
+      List<double>.from(json["o"].map((x) => x.toDouble())),
+      List<int>.from(json["t"].map((x) => x)),
+      List<int>.from(json["v"].map((x) => x)),
     );
 
     // Auxiliar reversed list.
     List<StockCandle> reversedList = [];
 
     // Populate auxiliar list.
-    for (var i = 0; i < stock.closes.length; i++) {
+    for (var i = 0; i < stock._closes.length; i++) {
       final stockData = StockCandle(
-        close: stock.closes[i],
-        high: stock.highs[i],
-        low: stock.lows[i],
-        open: stock.opens[i],
-        timestamp: stock.timestamps[i],
-        volume: stock.volumes[i],
+        close: stock._closes[i],
+        high: stock._highs[i],
+        low: stock._lows[i],
+        open: stock._opens[i],
+        timestamp: stock._timestamps[i],
+        volume: stock._volumes[i],
       );
       reversedList.add(stockData);
       if (i > 0) {
         final p1 = reversedList[i - 1].close;
         final p2 = reversedList[i].close;
-        reversedList[i].percentageOfChange = 100 * (p2 - p1) / p1;
+        reversedList[i].pctOfChange = 100 * (p2 - p1) / p1;
       }
     }
 
@@ -84,11 +87,11 @@ class StockCandles {
   }
 
   Map<String, dynamic> toJson() => {
-        "c": List<dynamic>.from(closes.map((x) => x)),
-        "h": List<dynamic>.from(highs.map((x) => x)),
-        "l": List<dynamic>.from(lows.map((x) => x)),
-        "o": List<dynamic>.from(opens.map((x) => x)),
-        "t": List<dynamic>.from(timestamps.map((x) => x)),
-        "v": List<dynamic>.from(volumes.map((x) => x)),
+        "c": List<dynamic>.from(_closes.map((x) => x)),
+        "h": List<dynamic>.from(_highs.map((x) => x)),
+        "l": List<dynamic>.from(_lows.map((x) => x)),
+        "o": List<dynamic>.from(_opens.map((x) => x)),
+        "t": List<dynamic>.from(_timestamps.map((x) => x)),
+        "v": List<dynamic>.from(_volumes.map((x) => x)),
       };
 }

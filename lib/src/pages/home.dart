@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-
+import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
-import 'package:stock_tracker/src/models/company_profile.dart';
-import 'package:stock_tracker/src/pages/stock_details.dart';
-import 'package:stock_tracker/src/services/candles_bloc.dart';
+
 import 'package:stock_tracker/src/services/company_profile_bloc.dart';
+
+import 'package:stock_tracker/src/pages/stock_details.dart';
+import 'package:stock_tracker/src/models/company_profile.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({Key key}) : super(key: key);
@@ -113,7 +113,6 @@ class StockCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bloc = Provider.of<CandlesBloc>(context);
     final w = MediaQuery.of(context).size.width;
     final textTheme = Theme.of(context).textTheme;
     return GestureDetector(
@@ -135,8 +134,9 @@ class StockCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text('${company.candles.quotes[0].close.toStringAsFixed(2)}',
-                      style: textTheme.headline5),
-                  buildPercentageOfChangeBox(),
+                      style: textTheme.headline5
+                          .copyWith(fontWeight: FontWeight.w300)),
+                  buildPctOfChangeBox(),
                 ],
               ),
             ),
@@ -153,7 +153,7 @@ class StockCard extends StatelessWidget {
       children: [
         Text(
           "${companyData.ticker}",
-          style: textTheme.headline4.copyWith(fontWeight: FontWeight.w500),
+          style: textTheme.headline4.copyWith(fontWeight: FontWeight.bold),
         ),
         Text(
           "${companyData.name}",
@@ -165,20 +165,20 @@ class StockCard extends StatelessWidget {
     );
   }
 
-  Container buildPercentageOfChangeBox() {
+  Container buildPctOfChangeBox() {
     return Container(
       margin: EdgeInsets.only(top: kDefaultPadding / 4),
       width: 80.0,
       height: 30.0,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: (company.candles.quotes[0].percentageOfChange >= 0)
+        color: (company.candles.quotes[0].pctOfChange >= 0)
             ? Colors.green
             : Colors.red,
         borderRadius: BorderRadius.all(Radius.circular(4.0)),
       ),
-      child: Text(
-          '${company.candles.quotes[0].percentageOfChange.toStringAsFixed(2)}%'),
+      child:
+          Text('${company.candles.quotes[0].pctOfChange.toStringAsFixed(2)}%'),
     );
   }
 }
