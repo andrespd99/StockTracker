@@ -2,26 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
 import 'package:stock_tracker/src/models/company_profile.dart';
+import 'package:stock_tracker/src/models/stock_details.dart';
 
 import 'package:stock_tracker/src/services/candles_bloc.dart';
 
 import 'package:intl/intl.dart';
+import 'package:stock_tracker/src/services/stocks_bloc.dart';
 
-class StockDetails extends StatelessWidget {
-  const StockDetails(this._companyData, {Key key}) : super(key: key);
+class StockDetailsPage extends StatelessWidget {
+  const StockDetailsPage(this._profile, {Key key}) : super(key: key);
 
-  final CompanyProfile _companyData;
+  final CompanyProfile _profile;
 
   @override
   Widget build(BuildContext context) {
-    Provider.of<CandlesBloc>(context).getStockCandles(_companyData.ticker);
+    // Provider.of<CandlesBloc>(context).getStockCandles(_companyData.ticker);
+    final bloc = Provider.of<StocksBloc>(context);
+
+    bloc.getStock(_profile.ticker);
 
     var textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: buildAppBar(textTheme),
       body: StreamBuilder(
-        stream: Provider.of<CandlesBloc>(context).candlesStream,
-        builder: (context, AsyncSnapshot<StockCandles> snapshot) {
+        stream: bloc.detailsStream,
+        builder: (context, AsyncSnapshot<StockDetails> snapshot) {
           return (snapshot.hasData)
               ? StockHistoric(snapshot.data)
               : Center(child: CircularProgressIndicator());
@@ -41,12 +46,12 @@ class StockDetails extends StatelessWidget {
         text: TextSpan(
           children: [
             TextSpan(
-                text: '${_companyData.ticker}',
+                text: '${_profile.ticker}',
                 style:
                     textTheme.headline5.copyWith(fontWeight: FontWeight.w800)),
             TextSpan(text: '     '),
             TextSpan(
-              text: '${_companyData.name}',
+              text: '${_profile.name}',
               style: TextStyle(color: Colors.grey),
             ),
           ],
@@ -59,13 +64,13 @@ class StockDetails extends StatelessWidget {
 class StockHistoric extends StatelessWidget {
   const StockHistoric(this.data, {Key key}) : super(key: key);
 
-  final StockCandles data;
+  final StockDetails data;
 
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
       shrinkWrap: true,
-      itemBuilder: (_, i) => StockDailyData(data.quotes[i]),
+      itemBuilder: (_, i) => StockDailyData(data.candles.candles[i]),
       separatorBuilder: (_, i) => Divider(),
       itemCount: kQuotesRange,
     );
@@ -114,7 +119,6 @@ class StockDailyData extends StatelessWidget {
 
   String getDateFromUnix(int timestamp) {
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000).toUtc();
-    print(date.toString());
     final formatter = DateFormat('EEEE, MMMM d');
     final dateFormated = formatter.format(date);
 

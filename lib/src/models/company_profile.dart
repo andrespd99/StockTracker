@@ -4,6 +4,7 @@
 
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:stock_tracker/src/models/stock_candles.dart';
 
 CompanyProfile companyProfileFromJson(String str) =>
@@ -39,7 +40,6 @@ class CompanyProfile {
   double shareOutstanding;
   String ticker;
   String weburl;
-  StockCandles candles;
 
   factory CompanyProfile.fromJson(Map<String, dynamic> json) => CompanyProfile(
         country: json["country"],
@@ -56,6 +56,36 @@ class CompanyProfile {
         weburl: json["weburl"],
       );
 
+  factory CompanyProfile.fromMap(Map<String, dynamic> map) {
+    String country = map['country'];
+    String currency = map['currency'];
+    String exchange = map['exchange'];
+    String finnhubIndustry = map['finnhubIndustry'];
+    DateTime ipo = map['ipo'].toDate();
+    String logo = map['logo'];
+    double marketCapitalization = map['marketCapitalization'].toDouble();
+    String name = map['name'];
+    String phone = map['phone'];
+    double shareOutstanding = map['shareOutstanding'].toDouble();
+    String ticker = map['ticker'];
+    String weburl = map['weburl'];
+
+    return CompanyProfile(
+      country: country,
+      currency: currency,
+      exchange: exchange,
+      finnhubIndustry: finnhubIndustry,
+      ipo: ipo,
+      logo: logo,
+      marketCapitalization: marketCapitalization,
+      name: name,
+      phone: phone,
+      shareOutstanding: shareOutstanding,
+      ticker: ticker,
+      weburl: weburl,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         "country": country,
         "currency": currency,
@@ -63,6 +93,21 @@ class CompanyProfile {
         "finnhubIndustry": finnhubIndustry,
         "ipo":
             "${ipo.year.toString().padLeft(4, '0')}-${ipo.month.toString().padLeft(2, '0')}-${ipo.day.toString().padLeft(2, '0')}",
+        "logo": logo,
+        "marketCapitalization": marketCapitalization,
+        "name": name,
+        "phone": phone,
+        "shareOutstanding": shareOutstanding,
+        "ticker": ticker,
+        "weburl": weburl,
+      };
+
+  Map<String, dynamic> toMap() => {
+        "country": country,
+        "currency": currency,
+        "exchange": exchange,
+        "finnhubIndustry": finnhubIndustry,
+        "ipo": Timestamp.fromDate(ipo),
         "logo": logo,
         "marketCapitalization": marketCapitalization,
         "name": name,

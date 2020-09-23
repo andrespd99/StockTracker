@@ -9,6 +9,7 @@ import 'package:stock_tracker/constants.dart';
 import 'package:stock_tracker/src/pages/home.dart';
 
 import 'package:stock_tracker/src/services/candles_bloc.dart';
+import 'package:stock_tracker/src/services/stocks_bloc.dart';
 import 'package:stock_tracker/src/services/symbols_bloc.dart';
 import 'package:stock_tracker/src/services/company_profile_bloc.dart';
 
@@ -32,9 +33,10 @@ class MyApp extends StatelessWidget {
 
           return MultiProvider(
             providers: [
+              Provider<StocksBloc>(create: (_) => StocksBloc()),
               Provider<SymbolsBloc>(create: (_) => SymbolsBloc()),
-              Provider<CompanyProfileBloc>(create: (_) => CompanyProfileBloc()),
               Provider<CandlesBloc>(create: (_) => CandlesBloc()),
+              Provider<CompanyProfileBloc>(create: (_) => CompanyProfileBloc()),
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -77,17 +79,15 @@ class Loading extends StatelessWidget {
       home: Material(
         child: Container(
           // width: MediaQuery.of(context).size.width,
-          color: kPrimaryColor,
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [kSecondaryColor, kPrimaryColor],
+          )),
           alignment: Alignment.center,
           child: Center(
-            child: Text(
-              'Stock Tracker',
-              style: TextStyle(
-                fontSize: 50.0,
-                fontWeight: FontWeight.bold,
-                fontFamily: GoogleFonts.roboto().fontFamily,
-              ),
-            ),
+            child: Text(''),
           ),
         ),
       ),

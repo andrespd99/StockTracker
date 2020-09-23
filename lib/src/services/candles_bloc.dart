@@ -43,8 +43,6 @@ class CandlesBloc {
       'token': _apiKey,
     });
 
-    print(url);
-
     // Process URL and convert the results to an Object.
     final resp = await _processResponse(url);
 

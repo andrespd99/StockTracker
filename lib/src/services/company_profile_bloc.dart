@@ -41,8 +41,6 @@ class CompanyProfileBloc {
   }
 
   Future<CompanyProfile> getCompany(String symbol) async {
-    // Check whether the company selected was already loaded and cached.
-
     // Check whether stock was already loaded or not.
     if (_companiesCache.isNotEmpty) {
       for (var i = 0; i < _companiesCache.length; i++) {
@@ -60,7 +58,6 @@ class CompanyProfileBloc {
 
     final resp = await _processResponseCompany(url);
 
-    resp.candles = await getStockCandles(symbol);
     _companiesCache.add(resp);
     companiesSink(_companiesCache);
     return resp;
@@ -76,15 +73,8 @@ class CompanyProfileBloc {
       'token': _apiKey,
     });
 
-    print(url);
-
     // Process URL and convert the results to an Object.
     final resp = await _processResponseCandles(url);
-
-    // Cache results in a list.
-    // if (resp.runtimeType == bool) {
-    //   return false;
-    // }
 
     return resp;
   }

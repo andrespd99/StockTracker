@@ -4,6 +4,9 @@
 
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+
 class StockCandle {
   StockCandle({
     this.close,
@@ -39,14 +42,14 @@ class StockCandles {
   );
 
   // List of all data structured in StockCandle objects.
-  List<StockCandle> quotes;
+  List<StockCandle> candles;
 
   // Data of all prices.
   List<double> _closes;
   List<double> _highs;
   List<double> _lows;
   List<double> _opens;
-  List<int> _timestamps;
+  List<int> _timestamps; // In seconds.
   List<int> _volumes;
 
   factory StockCandles.fromJson(Map<String, dynamic> json) {
@@ -58,7 +61,58 @@ class StockCandles {
       List<int>.from(json["t"].map((x) => x)),
       List<int>.from(json["v"].map((x) => x)),
     );
+    // Save stock data "unreversed" to show it from newest to oldest data.
+    stock.candles = _getCandles(stock);
 
+    return stock;
+  }
+
+  factory StockCandles.fromMap(Map<String, dynamic> map) {
+    List<double> closes =
+        List.castFrom<dynamic, double>(map['closes']).toList();
+    List<double> highs = List.castFrom<dynamic, double>(map['highs']).toList();
+    List<double> lows = List.castFrom<dynamic, double>(map['lows']).toList();
+    List<double> opens = List.castFrom<dynamic, double>(map['opens']).toList();
+    List<int> volumes = List.castFrom<dynamic, int>(map['volumes']).toList();
+    List timestamps = map['timestamps'];
+
+    final stock = StockCandles(
+      closes,
+      highs,
+      lows,
+      opens,
+      timestamps
+          .map<int>((e) => (e.millisecondsSinceEpoch ~/ 1000).toInt())
+          .toList(),
+      volumes,
+    );
+    // // Save stock data "unreversed" to show it from newest to oldest data.
+    stock.candles = _getCandles(stock);
+
+    return stock;
+  }
+
+  Map<String, dynamic> toJson() => {
+        "c": List<dynamic>.from(_closes.map((x) => x)),
+        "h": List<dynamic>.from(_highs.map((x) => x)),
+        "l": List<dynamic>.from(_lows.map((x) => x)),
+        "o": List<dynamic>.from(_opens.map((x) => x)),
+        "t": List<dynamic>.from(_timestamps.map((x) => x)),
+        "v": List<dynamic>.from(_volumes.map((x) => x)),
+      };
+
+  Map<String, dynamic> toMap() => {
+        "closes": _closes,
+        "highs": _highs,
+        "lows": _lows,
+        "opens": _opens,
+        "timestamps": _timestamps
+            .map((e) => Timestamp.fromMillisecondsSinceEpoch(e * 1000))
+            .toList(),
+        "volumes": _volumes,
+      };
+
+  static List<StockCandle> _getCandles(StockCandles stock) {
     // Auxiliar reversed list.
     List<StockCandle> reversedList = [];
 
@@ -80,18 +134,6 @@ class StockCandles {
       }
     }
 
-    // Save stock data "unreversed" to show it from newest to oldest data.
-    stock.quotes = new List.from(reversedList.reversed);
-
-    return stock;
+    return List.from(reversedList.reversed);
   }
-
-  Map<String, dynamic> toJson() => {
-        "c": List<dynamic>.from(_closes.map((x) => x)),
-        "h": List<dynamic>.from(_highs.map((x) => x)),
-        "l": List<dynamic>.from(_lows.map((x) => x)),
-        "o": List<dynamic>.from(_opens.map((x) => x)),
-        "t": List<dynamic>.from(_timestamps.map((x) => x)),
-        "v": List<dynamic>.from(_volumes.map((x) => x)),
-      };
 }

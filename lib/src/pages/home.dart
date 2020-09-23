@@ -3,25 +3,36 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
+import 'package:stock_tracker/src/models/stock_details.dart';
+import 'package:stock_tracker/src/pages/heatmap.dart';
 
 import 'package:stock_tracker/src/services/company_profile_bloc.dart';
 
 import 'package:stock_tracker/src/pages/stock_details.dart';
 import 'package:stock_tracker/src/models/company_profile.dart';
+import 'package:stock_tracker/src/services/stocks_bloc.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({Key key}) : super(key: key);
 
-  List<String> pinnedStocks = ['AAPL', 'GOOGL', 'NKE', 'SBUX'];
+  List<String> pinnedStocks = [
+    'AAPL',
+    'GOOGL',
+    'NKE',
+    'SBUX',
+    'EBAY',
+    'V',
+  ];
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final textTheme = Theme.of(context).textTheme;
 
-    final companiesBloc = Provider.of<CompanyProfileBloc>(context);
+    final stocksBloc = Provider.of<StocksBloc>(context);
+    Provider.of<StocksBloc>(context).getStocks(pinnedStocks);
 
-    pinnedStocks.forEach((element) => companiesBloc.getCompany(element));
+    // pinnedStocks.forEach((element) => companiesBloc.getCompany(element));
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
@@ -33,14 +44,24 @@ class HomePage extends StatelessWidget {
             HomeAppBar(textTheme: textTheme),
             SizedBox(height: kDefaultPadding),
             StreamBuilder(
-              stream: companiesBloc.companiesStream,
-              // initialData: initialData ,
+              stream: stocksBloc.stocksStream,
+              // initialData: stocksList,
               builder: (BuildContext context,
-                  AsyncSnapshot<List<CompanyProfile>> snapshot) {
+                  AsyncSnapshot<List<StockDetails>> snapshot) {
                 return snapshot.hasData
                     ? StockCards(snapshot.data)
                     : Center(child: CircularProgressIndicator());
               },
+            ),
+            Center(
+              child: RaisedButton(
+                  color: kPrimaryColor,
+                  child: Text(
+                    'SEE HEATMAP',
+                    style: TextStyle(color: kSecondaryColor),
+                  ),
+                  onPressed: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => HeatmapPage()))),
             ),
           ],
         ),
@@ -85,18 +106,18 @@ class HomeAppBar extends StatelessWidget {
 }
 
 class StockCards extends StatelessWidget {
-  const StockCards(this.companies, {Key key}) : super(key: key);
+  const StockCards(this.stockDetails, {Key key}) : super(key: key);
 
-  final List<CompanyProfile> companies;
+  final List<StockDetails> stockDetails;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: ListView.separated(
-        itemCount: companies.length,
+        itemCount: stockDetails.length,
         separatorBuilder: (context, index) => Divider(),
         itemBuilder: (context, i) {
-          return StockCard(companies[i]);
+          return StockCard(stockDetails[i]);
         },
       ),
     );
@@ -105,19 +126,21 @@ class StockCards extends StatelessWidget {
 
 class StockCard extends StatelessWidget {
   const StockCard(
-    this.company, {
+    this.stockDetails, {
     Key key,
   }) : super(key: key);
 
-  final CompanyProfile company;
+  final StockDetails stockDetails;
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final textTheme = Theme.of(context).textTheme;
     return GestureDetector(
-      onTap: () => Navigator.push(context,
-          MaterialPageRoute(builder: (context) => StockDetails(company))),
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => StockDetailsPage(stockDetails.profile))),
       child: Container(
         color: Colors.transparent,
         padding: EdgeInsets.symmetric(vertical: kDefaultPadding / 2.5),
@@ -126,14 +149,15 @@ class StockCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: buildSymbolAndName(company, textTheme),
+              child: buildSymbolAndName(stockDetails.profile, textTheme),
             ),
             Container(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('${company.candles.quotes[0].close.toStringAsFixed(2)}',
+                  Text(
+                      '${stockDetails.candles.candles[0].close.toStringAsFixed(2)}',
                       style: textTheme.headline5
                           .copyWith(fontWeight: FontWeight.w300)),
                   buildPctOfChangeBox(),
@@ -146,17 +170,17 @@ class StockCard extends StatelessWidget {
     );
   }
 
-  Column buildSymbolAndName(CompanyProfile companyData, TextTheme textTheme) {
+  Column buildSymbolAndName(CompanyProfile profile, TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text(
-          "${companyData.ticker}",
+          "${profile.ticker}",
           style: textTheme.headline4.copyWith(fontWeight: FontWeight.bold),
         ),
         Text(
-          "${companyData.name}",
+          "${profile.name}",
           style: textTheme.headline6,
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
@@ -166,19 +190,17 @@ class StockCard extends StatelessWidget {
   }
 
   Container buildPctOfChangeBox() {
+    final pctChange = stockDetails.candles.candles[0].pctOfChange;
     return Container(
       margin: EdgeInsets.only(top: kDefaultPadding / 4),
       width: 80.0,
       height: 30.0,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: (company.candles.quotes[0].pctOfChange >= 0)
-            ? Colors.green
-            : Colors.red,
+        color: (pctChange >= 0) ? Colors.green : Colors.red,
         borderRadius: BorderRadius.all(Radius.circular(4.0)),
       ),
-      child:
-          Text('${company.candles.quotes[0].pctOfChange.toStringAsFixed(2)}%'),
+      child: Text('${pctChange.toStringAsFixed(2)}%'),
     );
   }
 }
