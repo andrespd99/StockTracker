@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,12 +7,15 @@ import 'package:provider/provider.dart';
 // import 'package:google_fonts/google_fonts.dart';
 
 import 'package:stock_tracker/constants.dart';
-import 'package:stock_tracker/src/pages/home.dart';
+import 'package:stock_tracker/src/pages/home_page.dart';
+import 'package:stock_tracker/src/pages/login_page.dart';
 
-import 'package:stock_tracker/src/services/candles_bloc.dart';
-import 'package:stock_tracker/src/services/stocks_bloc.dart';
-import 'package:stock_tracker/src/services/symbols_bloc.dart';
-import 'package:stock_tracker/src/services/company_profile_bloc.dart';
+import 'package:stock_tracker/src/services/stocks/candles_bloc.dart';
+import 'package:stock_tracker/src/services/stocks/search.dart';
+import 'package:stock_tracker/src/services/stocks/stocks_bloc.dart';
+import 'package:stock_tracker/src/services/stocks/symbols_bloc.dart';
+import 'package:stock_tracker/src/delegates/company_profile_bloc.dart';
+import 'package:stock_tracker/src/services/validators/login_bloc.dart';
 
 void main() => runApp(MyApp());
 
@@ -36,15 +40,30 @@ class MyApp extends StatelessWidget {
               Provider<StocksBloc>(create: (_) => StocksBloc()),
               Provider<SymbolsBloc>(create: (_) => SymbolsBloc()),
               Provider<CandlesBloc>(create: (_) => CandlesBloc()),
-              Provider<CompanyProfileBloc>(create: (_) => CompanyProfileBloc()),
+              Provider<LoginBloc>(create: (_) => LoginBloc()),
+              Provider<SearchAlgolia>(create: (_) => SearchAlgolia()),
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
               theme: ThemeData(
+                cupertinoOverrideTheme: CupertinoThemeData(
+                  primaryColor: kPrimaryColor,
+                ),
+                appBarTheme: AppBarTheme(
+                  iconTheme: IconThemeData(color: Colors.white),
+                  brightness: Brightness.dark,
+                  elevation: 0.0,
+                  color: kSecondaryColor,
+                ),
+                cursorColor: kPrimaryColor,
+                buttonTheme: ButtonThemeData(
+                  buttonColor: kPrimaryColor,
+                  textTheme: ButtonTextTheme.primary,
+                ),
                 // Colors
                 brightness: Brightness.dark,
-                primaryColor: kPrimaryColor,
-                accentColor: kSecondaryColor,
+                primaryColor: kSecondaryColor,
+                accentColor: kPrimaryColor,
                 // Fonts
                 textTheme: TextTheme(
                   headline1: textTheme.headline1.copyWith(color: Colors.white),
