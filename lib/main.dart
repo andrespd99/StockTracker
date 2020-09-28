@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:stock_tracker/src/pages/admin/admin_main_page.dart';
+import 'package:stock_tracker/src/pages/home_page.dart';
 import 'package:stock_tracker/src/pages/index_page.dart';
 
 import 'package:stock_tracker/constants.dart';
+import 'package:stock_tracker/src/services/admin/admin_bloc.dart';
 
 import 'package:stock_tracker/src/services/stocks/candles_bloc.dart';
 import 'package:stock_tracker/src/services/stocks/search.dart';
@@ -42,6 +45,7 @@ class MyApp extends StatelessWidget {
               Provider<SignupFormBloc>(create: (_) => SignupFormBloc()),
               Provider<SearchAlgolia>(create: (_) => SearchAlgolia()),
               Provider<AuthBloc>(create: (_) => AuthBloc()),
+              Provider<AdminBloc>(create: (_) => AdminBloc()),
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -80,7 +84,9 @@ class MyApp extends StatelessWidget {
               title: 'Stocks App',
               home: Material(child: IndexPage()),
               routes: {
+                'home': (BuildContext context) => HomePage(),
                 'auth': (BuildContext context) => IndexPage(),
+                'admin': (BuildContext context) => AdminMainPage(),
               },
             ),
           );

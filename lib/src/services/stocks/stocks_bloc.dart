@@ -1,54 +1,47 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rxdart/subjects.dart';
 import 'package:stock_tracker/src/models/candles.dart';
 import 'package:stock_tracker/src/models/stock_details.dart';
 import 'package:stock_tracker/src/services/stocks/candles_bloc.dart';
 
 class StocksBloc {
-  final _detailsController = StreamController<StockDetails>.broadcast();
-  final _allStocksController = StreamController<List<StockDetails>>.broadcast();
+  final _stocksController = BehaviorSubject<List<StockDetails>>();
 
-  Function(StockDetails) get detailsSink => _detailsController.add;
-  Stream<StockDetails> get detailsStream => _detailsController.stream;
+  /* DEPRECATED */
+  // final _detailsController = StreamController<StockDetails>.broadcast();
+  // Function(StockDetails) get detailsSink => _detailsController.add;
+  // Stream<StockDetails> get detailsStream => _detailsController.stream;
+  /* DEPRECATED */
 
-  Function(List<StockDetails>) get stocksSink => _allStocksController.add;
-  Stream<List<StockDetails>> get stocksStream => _allStocksController.stream;
+  Function(List<StockDetails>) get stocksSink => _stocksController.add;
+  Stream<List<StockDetails>> get stocksStream => _stocksController.stream;
 
-  final _loadingController = StreamController<double>.broadcast();
-  Function(double) get loadingSink => _loadingController.add;
-  Stream<double> get loadingStream => _loadingController.stream;
-
-  double loadedPct = 0.0;
-
-  List<StockDetails> stocks = [];
   List<String> stockSymbols = [];
 
   void dispose() {
-    _detailsController?.close();
-    _allStocksController?.close();
-    _loadingController?.close();
+    // _detailsController?.close(); // DEPRECATED
+    _stocksController?.close();
   }
 
-  Future<List<StockDetails>> getStocks(List<String> stocksList) async {
-    print('Passed here');
-    final totalItems = stocksList.length;
+  /*
+  *   Loads stock details and returns a list of it.
+  */
+  Future<List<StockDetails>> loadStocks(List<String> stocksList) async {
+    List<StockDetails> stocks = [];
+
     for (var stockId in stocksList) {
       StockDetails stock = await getStock(stockId);
       if (stock != null && stock.candles != null) {
         if (stocks.every((e) => e.symbol != stockId)) {
           stocks.add(stock);
           stockSymbols.add(stock.symbol);
-          print(stock.symbol);
-          print('culo');
         } else {
           print("Stock $stockId already listed. Ignoring request.");
         }
       } else {
         print("Stock does not exists or is not available from API.");
       }
-      loadedPct += 1 / totalItems;
-      loadingSink(loadedPct);
-      if (loadedPct >= 1) loadedPct = 0;
     }
     stocksSink(stocks);
     return stocks;
@@ -99,7 +92,6 @@ class StocksBloc {
             transaction.update(
               documentReference,
               {
-                // 'profile': latestProfile.toMap(),
                 'candles': latestCandles.toMap(),
                 'latestUpdate': todaysTimestamp,
               },
@@ -107,14 +99,12 @@ class StocksBloc {
             print('Document updated successfuly.');
           } else {
             // Get information directly from Firebase, as it is up to date.
-            // latestProfile = CompanyProfile.fromMap(snapshot.data()['profile']);
             latestCandles = Candles.fromMap(snapshot.data()['candles']);
             latestTimestamp = snapshot.data()['latestUpdate'];
           }
           // Create an object from stock document.
           stock = StockDetails(
             candles: latestCandles,
-            // profile: latestProfile,
             latestUpdate: latestTimestamp.toDate(),
             currency: snapshot.data()['currency'],
             description: snapshot.data()['description'],
@@ -122,7 +112,7 @@ class StocksBloc {
             symbol: snapshot.data()['symbol'],
             type: snapshot.data()['type'],
           );
-          this.detailsSink(stock);
+          // this.detailsSink(stock); //DEPRECATED
           // Return the stock.
           return stock;
         })

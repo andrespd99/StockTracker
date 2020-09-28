@@ -121,12 +121,10 @@ class _StockDetailsPageState extends State<StockDetailsPage> {
             flex: 1,
             child: IconButton(
               icon: (isSelected) ? Icon(Icons.check) : Icon(Icons.add),
-              color: kPrimaryColor,
+              color: (isSelected) ? kPrimaryColor : Colors.white,
               onPressed: (isSelected)
-                  ? () => deleteStock(context, details.symbol, isSelected)
-                  : () {
-                      addStock(context, details.symbol, isSelected);
-                    },
+                  ? () => deleteStock(context, details.symbol)
+                  : () => addStock(context, details.symbol),
             ),
           ),
         ],
@@ -134,17 +132,35 @@ class _StockDetailsPageState extends State<StockDetailsPage> {
     );
   }
 
-  void addStock(BuildContext context, String symbol, bool isSelected) async {
-    final bloc = Provider.of<AuthBloc>(context, listen: false);
-    bloc.addPinnedStocks(symbol);
+  void addStock(BuildContext context, String symbol) async {
+    final authBloc = Provider.of<AuthBloc>(context, listen: false);
+    final stocksBloc = Provider.of<StocksBloc>(context, listen: false);
+    // Add selected stock to pinned list.
+    authBloc.addPinnedStocks(symbol);
+    // Get pinned stocks.
+    final stocks = authBloc.pinnedStocks;
+    // Load new stock list.
+    stocksBloc.loadStocks(stocks);
     setState(() {});
   }
 
-  void deleteStock(BuildContext context, String symbol, bool isSelected) async {
-    final bloc = Provider.of<AuthBloc>(context, listen: false);
-    bloc.removePinnedStocks(symbol);
+  void deleteStock(BuildContext context, String symbol) async {
+    final authBloc = Provider.of<AuthBloc>(context, listen: false);
+    final stocksBloc = Provider.of<StocksBloc>(context, listen: false);
+    // Remove selected stock from pinned list.
+    authBloc.removePinnedStocks(symbol);
+    // Get pinned stocks.
+    final stocks = authBloc.pinnedStocks;
+    // Load new stock list.
+    stocksBloc.loadStocks(stocks);
     setState(() {});
   }
+
+  // void deleteStock(BuildContext context, String symbol) async {
+  //   final bloc = Provider.of<AuthBloc>(context, listen: false);
+  //   bloc.removePinnedStocks(symbol);
+  //   setState(() {});
+  // }
 }
 
 class StockHistoric extends StatelessWidget {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:rxdart/subjects.dart';
 
 class AuthBloc {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -17,7 +18,7 @@ class AuthBloc {
   Stream<String> get signupError => _signupFormController.stream;
 
   //User-related objects.
-  final _pinnedStocksController = StreamController<List<String>>();
+  final _pinnedStocksController = BehaviorSubject<List<String>>();
   Function(List<String>) get pinnedStocksSink =>
       _pinnedStocksController.sink.add;
   Stream<List<String>> get pinnedStocksStream => _pinnedStocksController.stream;

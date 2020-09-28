@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
+import 'package:stock_tracker/src/pages/new_heatmap_page.dart';
 import 'package:stock_tracker/src/services/login/authenticate_bloc.dart';
+import 'package:stock_tracker/src/widgets/common.dart';
+import 'package:stock_tracker/src/widgets/drawer.dart';
 import 'package:stock_tracker/src/widgets/searcher.dart';
 
 import 'package:stock_tracker/src/services/stocks/stocks_bloc.dart';
 
-import 'package:stock_tracker/src/pages/heatmap_page.dart';
 import 'package:stock_tracker/src/models/stock_details.dart';
 import 'package:stock_tracker/src/pages/stock_details_page.dart';
 
@@ -24,35 +26,33 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Material(
-      child: FutureBuilder(
-        future: Provider.of<AuthBloc>(context).loadUserProfile(),
-        builder: (context, AsyncSnapshot<Map<String, dynamic>> profile) {
-          if (profile.hasData) {
-            loadPinnedStocks(profile.data['pinnedStocks']);
-            return Scaffold(
-              drawer: CustomDrawer(),
-              body: SafeArea(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      HomeAppBar(textTheme: textTheme),
-                      SizedBox(height: kDefaultPadding),
-                      StockCards(),
-                      Divider(),
-                      _createHeatmapButton(context),
-                    ],
-                  ),
+    return FutureBuilder(
+      future: Provider.of<AuthBloc>(context).loadUserProfile(),
+      builder: (context, AsyncSnapshot<Map<String, dynamic>> profile) {
+        if (profile.hasData) {
+          loadPinnedStocks(profile.data['pinnedStocks']);
+          return Scaffold(
+            drawer: CustomDrawer(onAdmin: false),
+            body: SafeArea(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HomeAppBar(textTheme: textTheme),
+                    SizedBox(height: kDefaultPadding),
+                    StockCards(),
+                    Divider(),
+                    _createHeatmapButton(context),
+                  ],
                 ),
               ),
-            );
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
+            ),
+          );
+        } else {
+          return Center(child: CircularProgressIndicator());
+        }
+      },
     );
   }
 
@@ -67,90 +67,19 @@ class _HomePageState extends State<HomePage> {
               'SEE HEATMAP',
             ),
             onPressed: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => HeatmapPage()))),
+                context, MaterialPageRoute(builder: (_) => NewHeatmapPage()))),
       ),
     );
   }
 
   void loadPinnedStocks(List data) {
-    final bloc = Provider.of<AuthBloc>(context);
+    final authBloc = Provider.of<AuthBloc>(context);
+    final stocksBloc = Provider.of<StocksBloc>(context);
 
     final pinnedStocks = List.castFrom<dynamic, String>(data).toList();
-    bloc.pinnedStocks = pinnedStocks;
-    bloc.pinnedStocksSink(pinnedStocks);
-  }
-}
-
-class CustomDrawer extends StatelessWidget {
-  const CustomDrawer({Key key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final bloc = Provider.of<AuthBloc>(context);
-    return Drawer(
-      child: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: kDefaultPadding,
-            vertical: kDefaultPadding * 2,
-          ),
-          child: ListView(
-            children: [
-              DrawerHeader(
-                child: Text(
-                  'Welcome, ${getUserName(bloc)}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headline6
-                      .copyWith(color: Colors.white),
-                ),
-              ),
-              ListTile(
-                title: Row(
-                  children: [
-                    Icon(Icons.person),
-                    SizedBox(width: kDefaultPadding / 2),
-                    Text('Profile'),
-                  ],
-                ),
-              ),
-              ListTile(
-                title: Row(
-                  children: [
-                    Icon(Icons.credit_card),
-                    SizedBox(width: kDefaultPadding / 2),
-                    Text('Membership'),
-                  ],
-                ),
-              ),
-              ListTile(
-                title: GestureDetector(
-                  child: Text(
-                    'Log out',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15.0,
-                    ),
-                  ),
-                  onTap: () =>
-                      Provider.of<AuthBloc>(context, listen: false).signOut(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String getUserName(AuthBloc bloc) {
-    String name;
-    name = bloc.profile['firstName'].toString() +
-        ' ' +
-        bloc.profile['lastName'].toString();
-
-    return name;
+    authBloc.pinnedStocks = pinnedStocks;
+    authBloc.pinnedStocksSink(pinnedStocks);
+    stocksBloc.loadStocks(pinnedStocks);
   }
 }
 
@@ -204,40 +133,44 @@ class StockCards extends StatelessWidget {
         stream: bloc.pinnedStocksStream,
         builder: (_, AsyncSnapshot<List<String>> snapshot) {
           if (snapshot.hasData) {
-            return Expanded(
-              child: ListView.separated(
-                itemCount: snapshot.data.length,
-                separatorBuilder: (context, index) => Divider(),
-                itemBuilder: (context, i) {
-                  return StockCard(snapshot.data[i]);
-                },
-              ),
-            );
-          } else {
-            return Expanded(
-              child: Center(
-                  child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('No stocks selected.'),
-                  SizedBox(height: kDefaultPadding / 2),
-                  GestureDetector(
-                    onTap: () => showSearch(
-                      context: context,
-                      delegate: Searcher(),
-                    ),
-                    child: Text(
-                      'Start searching',
-                      style: TextStyle(
-                        color: kPrimaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15.0,
+            if (snapshot.data.length > 0) {
+              return Expanded(
+                child: ListView.separated(
+                  itemCount: snapshot.data.length,
+                  separatorBuilder: (context, index) => Divider(),
+                  itemBuilder: (context, i) {
+                    return StockCard(snapshot.data[i]);
+                  },
+                ),
+              );
+            } else {
+              return Expanded(
+                child: Center(
+                    child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('No stocks selected.'),
+                    SizedBox(height: kDefaultPadding / 2),
+                    GestureDetector(
+                      onTap: () => showSearch(
+                        context: context,
+                        delegate: Searcher(),
+                      ),
+                      child: Text(
+                        'Start searching',
+                        style: TextStyle(
+                          color: kPrimaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15.0,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              )),
-            );
+                  ],
+                )),
+              );
+            }
+          } else {
+            return Expanded(child: Container());
           }
         });
   }
@@ -321,24 +254,6 @@ class StockCard extends StatelessWidget {
             ],
           )
         ],
-      ),
-    );
-  }
-
-  Widget getLoadingPlaceholder(double w, double h) {
-    return ClipRRect(
-      borderRadius: BorderRadius.all(Radius.circular(h / 7)),
-      child: Opacity(
-        opacity: 0.3,
-        child: Container(
-          width: w,
-          height: h,
-          color: Colors.grey,
-          child: LinearProgressIndicator(
-            valueColor: new AlwaysStoppedAnimation<Color>(
-                Colors.grey.shade200.withOpacity(0.4)),
-          ),
-        ),
       ),
     );
   }
