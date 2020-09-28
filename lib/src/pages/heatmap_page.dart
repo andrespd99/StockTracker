@@ -131,17 +131,17 @@ class GridItem extends StatelessWidget {
 
   Color getTileColor(double avg) {
     if (avg >= 3.0) {
-      return Color(0xFF107736);
+      return Colors.green.shade900;
     } else if (avg >= 1.0) {
-      return Color(0xFF3ae374);
+      return Colors.green;
     } else if (avg >= 0.0) {
-      return Color(0xFF7DF1A8);
+      return Colors.green.shade300;
     } else if (avg > -2.0) {
-      return Color(0xFFF17F7F);
+      return Colors.red.shade300;
     } else if (avg > -3.0) {
-      return Color(0xFFff4d4d);
+      return Colors.red;
     } else {
-      return Color(0xFF970F0F);
+      return Colors.red.shade900;
     }
   }
 }

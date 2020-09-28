@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:stock_tracker/constants.dart';
 
-import 'package:stock_tracker/src/models/stock_candles.dart';
-export 'package:stock_tracker/src/models/stock_candles.dart';
+import 'package:stock_tracker/src/models/candles.dart';
+export 'package:stock_tracker/src/models/candles.dart';
 
 class CandlesBloc {
   String _apiKey = kApiKey;
@@ -13,11 +13,11 @@ class CandlesBloc {
   bool _loading = false;
 
   // List<StockCandles> _stockCandles = [];
-  List<StockCandles> _stockCandles = [];
+  List<Candles> _stockCandles = [];
 
-  final _candlesStreamController = StreamController<StockCandles>.broadcast();
-  Function(StockCandles) get candlesSink => _candlesStreamController.sink.add;
-  Stream<StockCandles> get candlesStream => _candlesStreamController.stream;
+  final _candlesStreamController = StreamController<Candles>.broadcast();
+  Function(Candles) get candlesSink => _candlesStreamController.sink.add;
+  Stream<Candles> get candlesStream => _candlesStreamController.stream;
 
   void dispose() {
     _candlesStreamController?.close();

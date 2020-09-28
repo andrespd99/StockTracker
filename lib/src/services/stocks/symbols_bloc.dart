@@ -3,34 +3,31 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:stock_tracker/constants.dart';
 
-import 'package:stock_tracker/src/models/stock_symbol.dart';
-export 'package:stock_tracker/src/models/stock_symbol.dart';
+import 'package:stock_tracker/src/models/symbol.dart';
+export 'package:stock_tracker/src/models/symbol.dart';
 
 class SymbolsBloc {
   String _apiKey = kApiKey;
   String _url = kUrl;
 
-  List<StockSymbol> stockSymbols = [];
+  List<Symbol> stockSymbols = [];
 
-  final _symbolsStreamController =
-      StreamController<List<StockSymbol>>.broadcast();
-  Function(List<StockSymbol>) get symbolsSink =>
-      _symbolsStreamController.sink.add;
-  Stream<List<StockSymbol>> get symbolsStream =>
-      _symbolsStreamController.stream;
+  final _symbolsStreamController = StreamController<List<Symbol>>.broadcast();
+  Function(List<Symbol>) get symbolsSink => _symbolsStreamController.sink.add;
+  Stream<List<Symbol>> get symbolsStream => _symbolsStreamController.stream;
 
   void dispose() {
     _symbolsStreamController?.close();
   }
 
-  Future<List<StockSymbol>> _processResponse(Uri url) async {
+  Future<List<Symbol>> _processResponse(Uri url) async {
     final resp = await http.get(url);
     final symbols = stockSymbolFromJson(resp.body);
 
     return symbols;
   }
 
-  Future<List<StockSymbol>> getStockSymbols() async {
+  Future<List<Symbol>> getStockSymbols() async {
     final url = Uri.https(_url, '/api/v1/stock/symbol', {
       'exchange': 'US',
       'token': _apiKey,

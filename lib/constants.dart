@@ -18,3 +18,10 @@ const String kUrl = 'finnhub.io';
 
 // Config data.
 int kQuotesRange = 5;
+
+LinearGradient kLinearGradient = LinearGradient(
+  colors: [
+    kPrimaryColor,
+    Color(0xFF27B0B4),
+  ],
+);

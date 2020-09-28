@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:stock_tracker/src/models/stock_candles.dart';
+import 'package:stock_tracker/src/models/candles.dart';
 import 'package:stock_tracker/src/models/stock_details.dart';
 import 'package:stock_tracker/src/services/stocks/candles_bloc.dart';
 
@@ -14,13 +14,14 @@ class StocksBloc {
   Function(List<StockDetails>) get stocksSink => _allStocksController.add;
   Stream<List<StockDetails>> get stocksStream => _allStocksController.stream;
 
-  final _loadingController = StreamController<double>();
+  final _loadingController = StreamController<double>.broadcast();
   Function(double) get loadingSink => _loadingController.add;
   Stream<double> get loadingStream => _loadingController.stream;
 
   double loadedPct = 0.0;
 
   List<StockDetails> stocks = [];
+  List<String> stockSymbols = [];
 
   void dispose() {
     _detailsController?.close();
@@ -29,12 +30,16 @@ class StocksBloc {
   }
 
   Future<List<StockDetails>> getStocks(List<String> stocksList) async {
+    print('Passed here');
     final totalItems = stocksList.length;
     for (var stockId in stocksList) {
       StockDetails stock = await getStock(stockId);
       if (stock != null && stock.candles != null) {
         if (stocks.every((e) => e.symbol != stockId)) {
           stocks.add(stock);
+          stockSymbols.add(stock.symbol);
+          print(stock.symbol);
+          print('culo');
         } else {
           print("Stock $stockId already listed. Ignoring request.");
         }
@@ -43,6 +48,7 @@ class StocksBloc {
       }
       loadedPct += 1 / totalItems;
       loadingSink(loadedPct);
+      if (loadedPct >= 1) loadedPct = 0;
     }
     stocksSink(stocks);
     return stocks;
@@ -55,7 +61,7 @@ class StocksBloc {
     StockDetails stock; // New stock.
     Timestamp todaysTimestamp = Timestamp.now();
     Timestamp latestTimestamp;
-    StockCandles latestCandles;
+    Candles latestCandles;
     // CompanyProfile latestProfile;
 
     return await FirebaseFirestore.instance
@@ -102,7 +108,7 @@ class StocksBloc {
           } else {
             // Get information directly from Firebase, as it is up to date.
             // latestProfile = CompanyProfile.fromMap(snapshot.data()['profile']);
-            latestCandles = StockCandles.fromMap(snapshot.data()['candles']);
+            latestCandles = Candles.fromMap(snapshot.data()['candles']);
             latestTimestamp = snapshot.data()['latestUpdate'];
           }
           // Create an object from stock document.

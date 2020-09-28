@@ -6,9 +6,8 @@ class SearchAlgolia {
     apiKey: '97f0fd4ea9f52e4ed21ac982996b92a3',
   );
 
-  // Algolia algolia = _algolia.instance;
-
-  Future<List<AlgoliaObjectSnapshot>> getAlgoliaSnapshots(String query) async {
+  Future<List<AlgoliaObjectSnapshot>> getAlgoliaSuggestions(
+      String query) async {
     AlgoliaQuery algQuery = _algolia.index('dev_STOCKS_FINAL').search(query);
     AlgoliaQuerySnapshot snapshot = await algQuery.getObjects();
     return snapshot.hits;

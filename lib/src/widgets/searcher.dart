@@ -60,7 +60,7 @@ class Searcher extends SearchDelegate {
   FutureBuilder<List<AlgoliaObjectSnapshot>> _getQuerySnapshots(
       BuildContext context) {
     return FutureBuilder(
-      future: Provider.of<SearchAlgolia>(context).getAlgoliaSnapshots(query),
+      future: Provider.of<SearchAlgolia>(context).getAlgoliaSuggestions(query),
       builder: (context, AsyncSnapshot<List<AlgoliaObjectSnapshot>> snapshot) {
         return (!snapshot.hasData)
             ? Center(child: CircularProgressIndicator())

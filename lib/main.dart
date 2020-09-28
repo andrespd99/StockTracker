@@ -1,21 +1,19 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-// import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:stock_tracker/src/pages/index_page.dart';
 
 import 'package:stock_tracker/constants.dart';
-import 'package:stock_tracker/src/pages/home_page.dart';
-import 'package:stock_tracker/src/pages/login_page.dart';
 
 import 'package:stock_tracker/src/services/stocks/candles_bloc.dart';
 import 'package:stock_tracker/src/services/stocks/search.dart';
 import 'package:stock_tracker/src/services/stocks/stocks_bloc.dart';
 import 'package:stock_tracker/src/services/stocks/symbols_bloc.dart';
-import 'package:stock_tracker/src/delegates/company_profile_bloc.dart';
-import 'package:stock_tracker/src/services/validators/login_bloc.dart';
+import 'package:stock_tracker/src/services/login/authenticate_bloc.dart';
+import 'package:stock_tracker/src/services/login/login_form_bloc.dart';
+import 'package:stock_tracker/src/services/login/signup_form_bloc.dart';
 
 void main() => runApp(MyApp());
 
@@ -40,8 +38,10 @@ class MyApp extends StatelessWidget {
               Provider<StocksBloc>(create: (_) => StocksBloc()),
               Provider<SymbolsBloc>(create: (_) => SymbolsBloc()),
               Provider<CandlesBloc>(create: (_) => CandlesBloc()),
-              Provider<LoginBloc>(create: (_) => LoginBloc()),
+              Provider<LoginFormBloc>(create: (_) => LoginFormBloc()),
+              Provider<SignupFormBloc>(create: (_) => SignupFormBloc()),
               Provider<SearchAlgolia>(create: (_) => SearchAlgolia()),
+              Provider<AuthBloc>(create: (_) => AuthBloc()),
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -78,7 +78,10 @@ class MyApp extends StatelessWidget {
                 // Headlines
               ),
               title: 'Stocks App',
-              home: Material(child: HomePage()),
+              home: Material(child: IndexPage()),
+              routes: {
+                'auth': (BuildContext context) => IndexPage(),
+              },
             ),
           );
         }
@@ -97,7 +100,6 @@ class Loading extends StatelessWidget {
     return MaterialApp(
       home: Material(
         child: Container(
-          // width: MediaQuery.of(context).size.width,
           decoration: BoxDecoration(
               gradient: LinearGradient(
             begin: Alignment.topCenter,

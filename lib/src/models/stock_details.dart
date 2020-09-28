@@ -1,12 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:stock_tracker/src/models/stock_candles.dart';
-import 'package:stock_tracker/src/delegates/company_profile.dart';
+import 'package:stock_tracker/src/models/candles.dart';
 
 class StockDetails {
   StockDetails({
     this.candles,
-    // this.profile,
     this.currency,
     this.description,
     this.displaySymbol,
@@ -19,8 +15,7 @@ class StockDetails {
     this.pctChange5 = 100 * (p2 - p1) / p1;
   }
 
-  StockCandles candles;
-  // CompanyProfile profile;
+  Candles candles;
   String currency;
   String description;
   String displaySymbol;

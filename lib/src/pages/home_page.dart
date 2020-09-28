@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
+import 'package:stock_tracker/src/services/login/authenticate_bloc.dart';
 import 'package:stock_tracker/src/widgets/searcher.dart';
 
 import 'package:stock_tracker/src/services/stocks/stocks_bloc.dart';
@@ -19,71 +20,121 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<String> pinnedStocks = [
-    'AAPL',
-    'GOOGL',
-    'NKE',
-    'SBUX',
-    'EBAY',
-    'V',
-    'VOD',
-    'PI',
-  ];
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      child: FutureBuilder(
+        future: Provider.of<AuthBloc>(context).loadUserProfile(),
+        builder: (context, AsyncSnapshot<Map<String, dynamic>> profile) {
+          if (profile.hasData) {
+            loadPinnedStocks(profile.data['pinnedStocks']);
+            return Scaffold(
+              drawer: CustomDrawer(),
+              body: SafeArea(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeAppBar(textTheme: textTheme),
+                      SizedBox(height: kDefaultPadding),
+                      StockCards(),
+                      Divider(),
+                      _createHeatmapButton(context),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _createHeatmapButton(BuildContext context) {
+    return Center(
+      child: Container(
+        margin: EdgeInsets.only(top: kDefaultPadding / 3),
+        child: RaisedButton(
+            padding: EdgeInsets.symmetric(
+                horizontal: kDefaultPadding * 2.5, vertical: kDefaultPadding),
+            child: Text(
+              'SEE HEATMAP',
+            ),
+            onPressed: () => Navigator.push(
+                context, MaterialPageRoute(builder: (_) => HeatmapPage()))),
+      ),
+    );
+  }
+
+  void loadPinnedStocks(List data) {
+    final bloc = Provider.of<AuthBloc>(context);
+
+    final pinnedStocks = List.castFrom<dynamic, String>(data).toList();
+    bloc.pinnedStocks = pinnedStocks;
+    bloc.pinnedStocksSink(pinnedStocks);
+  }
+}
+
+class CustomDrawer extends StatelessWidget {
+  const CustomDrawer({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-    final textTheme = Theme.of(context).textTheme;
-
-    final stocksBloc = Provider.of<StocksBloc>(context);
-    Provider.of<StocksBloc>(context).getStocks(pinnedStocks);
-
-    // pinnedStocks.forEach((element) => companiesBloc.getCompany(element));
-
-    return Material(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
-        width: w,
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final bloc = Provider.of<AuthBloc>(context);
+    return Drawer(
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: kDefaultPadding,
+            vertical: kDefaultPadding * 2,
+          ),
+          child: ListView(
             children: [
-              HomeAppBar(textTheme: textTheme),
-              SizedBox(height: kDefaultPadding),
-              StreamBuilder(
-                stream: stocksBloc.stocksStream,
-                // initialData: stocksList,
-                builder: (BuildContext context,
-                    AsyncSnapshot<List<StockDetails>> snapshot) {
-                  return snapshot.hasData
-                      ? StockCards(snapshot.data)
-                      : StreamBuilder(
-                          stream: stocksBloc.loadingStream,
-                          builder: (context, snapshot) {
-                            return Expanded(
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  backgroundColor: kSecondaryColor,
-                                  value: stocksBloc.loadedPct,
-                                ),
-                              ),
-                            );
-                          });
-                },
+              DrawerHeader(
+                child: Text(
+                  'Welcome, ${getUserName(bloc)}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headline6
+                      .copyWith(color: Colors.white),
+                ),
               ),
-              Divider(),
-              Center(
-                child: Container(
-                  margin: EdgeInsets.only(top: kDefaultPadding / 3),
-                  child: RaisedButton(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: kDefaultPadding * 2.5,
-                          vertical: kDefaultPadding),
-                      child: Text(
-                        'SEE HEATMAP',
-                      ),
-                      onPressed: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => HeatmapPage()))),
+              ListTile(
+                title: Row(
+                  children: [
+                    Icon(Icons.person),
+                    SizedBox(width: kDefaultPadding / 2),
+                    Text('Profile'),
+                  ],
+                ),
+              ),
+              ListTile(
+                title: Row(
+                  children: [
+                    Icon(Icons.credit_card),
+                    SizedBox(width: kDefaultPadding / 2),
+                    Text('Membership'),
+                  ],
+                ),
+              ),
+              ListTile(
+                title: GestureDetector(
+                  child: Text(
+                    'Log out',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15.0,
+                    ),
+                  ),
+                  onTap: () =>
+                      Provider.of<AuthBloc>(context, listen: false).signOut(),
                 ),
               ),
             ],
@@ -92,13 +143,19 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  String getUserName(AuthBloc bloc) {
+    String name;
+    name = bloc.profile['firstName'].toString() +
+        ' ' +
+        bloc.profile['lastName'].toString();
+
+    return name;
+  }
 }
 
 class HomeAppBar extends StatelessWidget {
-  const HomeAppBar({
-    Key key,
-    @required this.textTheme,
-  }) : super(key: key);
+  const HomeAppBar({Key key, @required this.textTheme}) : super(key: key);
 
   final TextTheme textTheme;
 
@@ -108,7 +165,15 @@ class HomeAppBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Stocks', style: textTheme.headline3),
+          IconButton(
+            padding: EdgeInsets.all(0),
+            alignment: Alignment.centerLeft,
+            icon: Icon(Icons.menu),
+            color: Colors.white,
+            iconSize: 30.0,
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+          Text('Home', style: textTheme.headline3),
           Text(getTodayDate(),
               style: textTheme.headline4
                   .copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold)),
@@ -130,67 +195,149 @@ class HomeAppBar extends StatelessWidget {
 }
 
 class StockCards extends StatelessWidget {
-  const StockCards(this.stockDetails, {Key key}) : super(key: key);
-
-  final List<StockDetails> stockDetails;
+  const StockCards({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: ListView.separated(
-        itemCount: stockDetails.length,
-        separatorBuilder: (context, index) => Divider(),
-        itemBuilder: (context, i) {
-          return StockCard(stockDetails[i]);
-        },
-      ),
-    );
+    final bloc = Provider.of<AuthBloc>(context);
+    return StreamBuilder(
+        stream: bloc.pinnedStocksStream,
+        builder: (_, AsyncSnapshot<List<String>> snapshot) {
+          if (snapshot.hasData) {
+            return Expanded(
+              child: ListView.separated(
+                itemCount: snapshot.data.length,
+                separatorBuilder: (context, index) => Divider(),
+                itemBuilder: (context, i) {
+                  return StockCard(snapshot.data[i]);
+                },
+              ),
+            );
+          } else {
+            return Expanded(
+              child: Center(
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('No stocks selected.'),
+                  SizedBox(height: kDefaultPadding / 2),
+                  GestureDetector(
+                    onTap: () => showSearch(
+                      context: context,
+                      delegate: Searcher(),
+                    ),
+                    child: Text(
+                      'Start searching',
+                      style: TextStyle(
+                        color: kPrimaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.0,
+                      ),
+                    ),
+                  ),
+                ],
+              )),
+            );
+          }
+        });
   }
 }
 
 class StockCard extends StatelessWidget {
-  const StockCard(
-    this.stockDetails, {
-    Key key,
-  }) : super(key: key);
+  const StockCard(this.symbol, {Key key}) : super(key: key);
 
-  final StockDetails stockDetails;
+  final String symbol;
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final textTheme = Theme.of(context).textTheme;
 
-    final latestClose = stockDetails.candles.candles[0].close;
-
-    return GestureDetector(
-      onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => StockDetailsPage(details: stockDetails))),
-      child: Container(
-        color: Colors.transparent,
-        padding: EdgeInsets.symmetric(vertical: kDefaultPadding / 2.5),
-        width: w,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: buildSymbolAndName(stockDetails, textTheme),
-            ),
-            Container(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.end,
+    return FutureBuilder(
+      future: Provider.of<StocksBloc>(context).getStock(symbol),
+      builder: (context, AsyncSnapshot<StockDetails> snapshot) {
+        if (snapshot.hasData) {
+          final StockDetails stockDetails = snapshot.data;
+          final latestClose = stockDetails.candles.candles[0].close;
+          return GestureDetector(
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        StockDetailsPage(details: stockDetails))),
+            child: Container(
+              color: Colors.transparent,
+              padding: EdgeInsets.symmetric(vertical: kDefaultPadding / 2.5),
+              width: w,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('${latestClose.toStringAsFixed(2)}',
-                      style: textTheme.headline5
-                          .copyWith(fontWeight: FontWeight.w300)),
-                  buildPctOfChangeBox(),
+                  Expanded(
+                    child: buildSymbolAndName(stockDetails, textTheme),
+                  ),
+                  Container(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('${latestClose.toStringAsFixed(2)}',
+                            style: textTheme.headline5
+                                .copyWith(fontWeight: FontWeight.w300)),
+                        buildPctOfChangeBox(stockDetails),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
+          );
+        } else {
+          return buildLoadingStockCard();
+        }
+      },
+    );
+  }
+
+  Container buildLoadingStockCard() {
+    return Container(
+      padding: EdgeInsets.only(top: kDefaultPadding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              getLoadingPlaceholder(90, 30),
+              SizedBox(height: 10),
+              getLoadingPlaceholder(140, 20),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              getLoadingPlaceholder(70, 23),
+              SizedBox(height: 10),
+              getLoadingPlaceholder(80, 30),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget getLoadingPlaceholder(double w, double h) {
+    return ClipRRect(
+      borderRadius: BorderRadius.all(Radius.circular(h / 7)),
+      child: Opacity(
+        opacity: 0.3,
+        child: Container(
+          width: w,
+          height: h,
+          color: Colors.grey,
+          child: LinearProgressIndicator(
+            valueColor: new AlwaysStoppedAnimation<Color>(
+                Colors.grey.shade200.withOpacity(0.4)),
+          ),
         ),
       ),
     );
@@ -215,7 +362,7 @@ class StockCard extends StatelessWidget {
     );
   }
 
-  Container buildPctOfChangeBox() {
+  Container buildPctOfChangeBox(StockDetails stockDetails) {
     final pctChange = stockDetails.candles.candles[0].pctOfChange;
     return Container(
       margin: EdgeInsets.only(top: kDefaultPadding / 4),

@@ -1,26 +1,45 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
 import 'package:stock_tracker/src/models/stock_details.dart';
+import 'package:stock_tracker/src/services/login/authenticate_bloc.dart';
 
 import 'package:stock_tracker/src/services/stocks/candles_bloc.dart';
 
 import 'package:intl/intl.dart';
 import 'package:stock_tracker/src/services/stocks/stocks_bloc.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:syncfusion_flutter_core/theme.dart';
 
-class StockDetailsPage extends StatelessWidget {
-  const StockDetailsPage({this.details, this.stockId, Key key})
-      : super(key: key);
+class StockDetailsPage extends StatefulWidget {
+  StockDetailsPage({this.details, this.stockId, Key key}) : super(key: key);
 
   final StockDetails details;
   final String stockId;
 
   @override
+  _StockDetailsPageState createState() => _StockDetailsPageState();
+}
+
+class _StockDetailsPageState extends State<StockDetailsPage> {
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final bloc = Provider.of<StocksBloc>(context);
+
+    bool isSelected;
+
+    if (widget.stockId != null) {
+      isSelected =
+          Provider.of<AuthBloc>(context).pinnedStocks.contains(widget.stockId);
+      print(isSelected);
+    } else if (widget.details != null) {
+      isSelected = Provider.of<AuthBloc>(context)
+          .pinnedStocks
+          .contains(widget.details.symbol);
+      print(isSelected);
+    }
 
     /* We have two use-cases. We either
     *   - Get stock details, which means it was already fetched.
@@ -28,15 +47,16 @@ class StockDetailsPage extends StatelessWidget {
     */
 
     //First use-case: only stockId provided.
-    if (details == null && stockId != null) {
+    if (widget.details == null && widget.stockId != null) {
       return Material(
         child: FutureBuilder(
-          future: bloc.getStock(stockId),
+          future: bloc.getStock(widget.stockId),
           builder: (context, AsyncSnapshot<StockDetails> snapshot) {
             return (!snapshot.hasData)
                 ? Center(child: CircularProgressIndicator())
                 : Scaffold(
-                    appBar: buildAppBar(textTheme, snapshot.data),
+                    appBar: buildAppBar(
+                        textTheme, snapshot.data, context, isSelected),
                     body: (!snapshot.hasData)
                         ? Expanded(
                             child: Center(child: CircularProgressIndicator()))
@@ -51,13 +71,13 @@ class StockDetailsPage extends StatelessWidget {
         ),
       );
       //Second use-case: details is provided.
-    } else if (details != null) {
+    } else if (widget.details != null) {
       return Scaffold(
-        appBar: buildAppBar(textTheme, details),
+        appBar: buildAppBar(textTheme, widget.details, context, isSelected),
         body: ListView(
           children: [
-            StockHistoric(details),
-            StockChart(details),
+            StockHistoric(widget.details),
+            StockChart(widget.details),
           ],
         ),
       );
@@ -70,26 +90,60 @@ class StockDetailsPage extends StatelessWidget {
     }
   }
 
-  AppBar buildAppBar(TextTheme textTheme, StockDetails details) {
+  AppBar buildAppBar(TextTheme textTheme, StockDetails details,
+      BuildContext context, bool isSelected) {
     return AppBar(
       centerTitle: false,
       toolbarHeight: kAppBarHeight,
-      title: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(
-                text: '${details.symbol}',
-                style:
-                    textTheme.headline5.copyWith(fontWeight: FontWeight.w800)),
-            TextSpan(text: '     '),
-            TextSpan(
-              text: '${details.description}',
-              style: TextStyle(color: Colors.grey),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 5,
+            child: RichText(
+              overflow: TextOverflow.fade,
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                      text: '${details.symbol}',
+                      style: textTheme.headline5
+                          .copyWith(fontWeight: FontWeight.w800)),
+                  TextSpan(text: '     '),
+                  TextSpan(
+                    text: '${details.description}',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 1,
+            child: IconButton(
+              icon: (isSelected) ? Icon(Icons.check) : Icon(Icons.add),
+              color: kPrimaryColor,
+              onPressed: (isSelected)
+                  ? () => deleteStock(context, details.symbol, isSelected)
+                  : () {
+                      addStock(context, details.symbol, isSelected);
+                    },
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  void addStock(BuildContext context, String symbol, bool isSelected) async {
+    final bloc = Provider.of<AuthBloc>(context, listen: false);
+    bloc.addPinnedStocks(symbol);
+    setState(() {});
+  }
+
+  void deleteStock(BuildContext context, String symbol, bool isSelected) async {
+    final bloc = Provider.of<AuthBloc>(context, listen: false);
+    bloc.removePinnedStocks(symbol);
+    setState(() {});
   }
 }
 
@@ -116,7 +170,7 @@ class StockDailyData extends StatelessWidget {
     Key key,
   }) : super(key: key);
 
-  final StockCandle data;
+  final Candle data;
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +219,7 @@ class AtCloseInfobar extends StatelessWidget {
     Key key,
   }) : super(key: key);
 
-  final StockCandle data;
+  final Candle data;
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +270,7 @@ class AtOpenInfobar extends StatelessWidget {
     Key key,
   }) : super(key: key);
 
-  final StockCandle data;
+  final Candle data;
 
   @override
   Widget build(BuildContext context) {
@@ -275,8 +329,8 @@ class StockChart extends StatelessWidget {
         primaryXAxis: CategoryAxis(labelRotation: 50),
         primaryYAxis: NumericAxis(labelFormat: '{value} \$', maximumLabels: 1),
 
-        series: <LineSeries<StockCandle, String>>[
-          LineSeries<StockCandle, String>(
+        series: <LineSeries<Candle, String>>[
+          LineSeries<Candle, String>(
             name: '${_details.symbol} Serie',
             color: kPrimaryColor,
             markerSettings:
@@ -284,9 +338,9 @@ class StockChart extends StatelessWidget {
             enableTooltip: true,
             // Bind data source
             dataSource: prices.reversed.toList(),
-            xValueMapper: (StockCandle candle, _) =>
+            xValueMapper: (Candle candle, _) =>
                 getDateToString(candle.timestamp),
-            yValueMapper: (StockCandle candle, _) => candle.close,
+            yValueMapper: (Candle candle, _) => candle.close,
           )
         ],
       ),
@@ -294,6 +348,7 @@ class StockChart extends StatelessWidget {
   }
 
   getDateToString(int timestamp) {
+    timestamp = timestamp + 60 * 60 * 24;
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
     final formatter = DateFormat('MM/d');
     final formated = formatter.format(date);
