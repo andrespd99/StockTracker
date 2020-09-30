@@ -15,7 +15,7 @@ class IndexPage extends StatelessWidget {
     return StreamBuilder(
       stream: auth.authStateChanges(),
       builder: (context, AsyncSnapshot<User> snapshot) {
-        return (snapshot.data == null) ? LoginPage() : AdminMainPage();
+        return (snapshot.data == null) ? LoginPage() : HomePage();
       },
     );
   }
