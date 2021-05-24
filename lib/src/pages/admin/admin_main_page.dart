@@ -10,7 +10,6 @@ class AdminMainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      drawer: CustomDrawer(onAdmin: true),
       appBar: AppBar(
         title: Text('Admin tools'),
       ),

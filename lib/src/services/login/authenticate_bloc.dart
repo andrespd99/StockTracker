@@ -23,6 +23,10 @@ class AuthBloc {
       _pinnedStocksController.sink.add;
   Stream<List<String>> get pinnedStocksStream => _pinnedStocksController.stream;
 
+  final _profileController = BehaviorSubject<Map<String, dynamic>>();
+  Function(Map<String, dynamic>) get profileSink => _profileController.sink.add;
+  Stream<Map<String, dynamic>> get profileStream => _profileController.stream;
+
   User user;
   Map<String, dynamic> profile;
   List<String> pinnedStocks;
@@ -31,13 +35,14 @@ class AuthBloc {
     _loginFormController?.close();
     _signupFormController?.close();
     _pinnedStocksController?.close();
+    _profileController?.close();
   }
 
   AuthBloc() {
     loadUserProfile();
   }
 
-  Future<User> createUserWithEmail(email, password, firstName, lastName) async {
+  Future<User> signInWithEmail(email, password, firstName, lastName) async {
     User user;
     profile = {
       'email': email,
@@ -45,6 +50,9 @@ class AuthBloc {
       'firstName': firstName,
       'lastName': lastName,
       'lastSeen': Timestamp.now(),
+      'isSuscribed': true,
+      'isAdmin': false,
+      'isSuperAdmin': false,
     };
     try {
       user = (await FirebaseAuth.instance
@@ -57,6 +65,8 @@ class AuthBloc {
               .doc(snap.user.uid)
               .get()
               .then((snap) => snap.data());
+          profileSink(profile);
+
           return snap.user;
         },
       ));
@@ -107,6 +117,7 @@ class AuthBloc {
             .doc(user.uid)
             .get()
             .then((snap) => snap.data().map((key, value) => null));
+        profileSink(profile);
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
@@ -125,6 +136,7 @@ class AuthBloc {
           await db.collection('users').doc(_auth.currentUser.uid).get();
 
       profile = docSnap.data();
+      profileSink(profile);
     }
     return profile;
   }
@@ -180,5 +192,8 @@ class AuthBloc {
 
   void signOut() async {
     await FirebaseAuth.instance.signOut();
+    this.user = null;
+    this.profile = null;
+    this.pinnedStocks = null;
   }
 }

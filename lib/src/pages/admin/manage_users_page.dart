@@ -1,3 +1,4 @@
+import 'package:firebase_admin/firebase_admin.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
@@ -8,6 +9,7 @@ class ManageUsersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final FirebaseAdmin admin = FirebaseAdmin.instance;
     return Scaffold(
       appBar: AppBar(title: Text('User management')),
       body: Padding(

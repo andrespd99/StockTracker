@@ -9,6 +9,7 @@ import 'package:stock_tracker/src/pages/index_page.dart';
 
 import 'package:stock_tracker/constants.dart';
 import 'package:stock_tracker/src/services/admin/admin_bloc.dart';
+import 'package:stock_tracker/src/services/navbar_bloc.dart';
 
 import 'package:stock_tracker/src/services/stocks/candles_bloc.dart';
 import 'package:stock_tracker/src/services/stocks/search.dart';
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
               Provider<SearchAlgolia>(create: (_) => SearchAlgolia()),
               Provider<AuthBloc>(create: (_) => AuthBloc()),
               Provider<AdminBloc>(create: (_) => AdminBloc()),
+              Provider<NavBarBloc>(create: (_) => NavBarBloc()),
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -110,7 +112,7 @@ class Loading extends StatelessWidget {
               gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [kSecondaryColor, kPrimaryColor],
+            // colors: [kSecondaryColor, kPrimaryColor],
           )),
           alignment: Alignment.center,
           child: Center(

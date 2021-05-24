@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // Dimensions constants.
 const double kDefaultPadding = 20.0;
 const double kAppBarHeight = 70;
+const double kNavBarHeight = 74.0;
 
 // Theme constants.
 const Color kPrimaryColor = Color(0xFF32ff7e);

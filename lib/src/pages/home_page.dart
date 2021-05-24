@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:stock_tracker/constants.dart';
-import 'package:stock_tracker/src/pages/new_heatmap_page.dart';
+import 'package:stock_tracker/src/pages/heatmap_page.dart';
 import 'package:stock_tracker/src/services/login/authenticate_bloc.dart';
 import 'package:stock_tracker/src/widgets/common.dart';
-import 'package:stock_tracker/src/widgets/drawer.dart';
 import 'package:stock_tracker/src/widgets/searcher.dart';
 
 import 'package:stock_tracker/src/services/stocks/stocks_bloc.dart';
@@ -25,51 +24,49 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-
-    return FutureBuilder(
-      future: Provider.of<AuthBloc>(context).loadUserProfile(),
-      builder: (context, AsyncSnapshot<Map<String, dynamic>> profile) {
-        if (profile.hasData) {
-          loadPinnedStocks(profile.data['pinnedStocks']);
-          return Scaffold(
-            drawer: CustomDrawer(onAdmin: false),
-            body: SafeArea(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    HomeAppBar(textTheme: textTheme),
-                    SizedBox(height: kDefaultPadding),
-                    StockCards(),
-                    Divider(),
-                    _createHeatmapButton(context),
-                  ],
-                ),
-              ),
-            ),
-          );
-        } else {
-          return Center(child: CircularProgressIndicator());
-        }
-      },
-    );
-  }
-
-  Widget _createHeatmapButton(BuildContext context) {
-    return Center(
-      child: Container(
-        margin: EdgeInsets.only(top: kDefaultPadding / 3),
-        child: RaisedButton(
-            padding: EdgeInsets.symmetric(
-                horizontal: kDefaultPadding * 2.5, vertical: kDefaultPadding),
-            child: Text(
-              'SEE HEATMAP',
-            ),
-            onPressed: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => NewHeatmapPage()))),
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              HomeAppBar(textTheme: textTheme),
+              SizedBox(height: kDefaultPadding),
+              StockCards(),
+              SizedBox(height: kNavBarHeight + kDefaultPadding)
+            ],
+          ),
+        ),
       ),
     );
+
+    // return FutureBuilder(
+    //   future: Provider.of<AuthBloc>(context).loadUserProfile(),
+    //   builder: (context, AsyncSnapshot<Map<String, dynamic>> profile) {
+    //     if (profile.hasData) {
+    //       loadPinnedStocks(profile.data['pinnedStocks']);
+    //       return Scaffold(
+    //         body: SafeArea(
+    //           child: Container(
+    //             padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
+    //             child: Column(
+    //               crossAxisAlignment: CrossAxisAlignment.start,
+    //               children: [
+    //                 HomeAppBar(textTheme: textTheme),
+    //                 SizedBox(height: kDefaultPadding),
+    //                 StockCards(),
+    //                 SizedBox(height: kNavBarHeight + kDefaultPadding)
+    //               ],
+    //             ),
+    //           ),
+    //         ),
+    //       );
+    //     } else {
+    //       return Center(child: CircularProgressIndicator());
+    //     }
+    //   },
+    // );
   }
 
   void loadPinnedStocks(List data) {
@@ -94,14 +91,6 @@ class HomeAppBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            padding: EdgeInsets.all(0),
-            alignment: Alignment.centerLeft,
-            icon: Icon(Icons.menu),
-            color: Colors.white,
-            iconSize: 30.0,
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
           Text('Home', style: textTheme.headline3),
           Text(getTodayDate(),
               style: textTheme.headline4

@@ -204,7 +204,7 @@ class _SignupFormState extends State<SignupForm> {
 
   void _register(BuildContext context) async {
     User user =
-        await Provider.of<AuthBloc>(context, listen: false).createUserWithEmail(
+        await Provider.of<AuthBloc>(context, listen: false).signInWithEmail(
       _emailController.text,
       _passwordController.text,
       _firstNameController.text,
